@@ -1,0 +1,115 @@
+stages:
+  - build
+  - test
+  - deploy
+  - pages
+variables:
+  IMAGE_TAG: $CI_COMMIT_BRANCH-$CI_COMMIT_SHORT_SHA
+    
+include:
+  - local: local-smoke-tests.gitlab-ci.yml
+  
+image: alpine
+
+
+build_job:
+  stage: build
+  script:
+    - echo "Building the project..."
+  artifacts:
+    paths:
+      - path/to/artifact
+    exclude:
+      - path/to/artifact/excluded_file.txt
+
+docker build:
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - docker login -u $GITLAB_CI_USER -p $GITLAB_CI_PASSWORD $CI_REGISTRY
+    - echo $GITLAB_CI_USER $GITLAB_CI_PASSWORD $CI_REGISTRY $CI_REGISTRY_IMAGE:$IMAGE_TAG
+    - docker build -t $CI_REGISTRY_IMAGE:$IMAGE_TAG .
+    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+
+test_job:
+  stage: test
+  script:
+    - echo "Running tests..."
+
+deploy to preprod:
+  stage: deploy
+  variables:
+    TARGET_ENV: preprod
+    MyLogin: "Preprod Tengizovich"
+  script:
+    - echo "Do your deploy here to ${TARGET_ENV}"
+    - echo ${DB_SERVER}
+    - echo "MyLogin"
+    - echo $MyLogin
+    - echo "MyPassword"
+    - echo $MyPassword
+  only:
+    - main
+  environment:
+    name: preprod
+
+deploy to production:
+  stage: deploy
+  variables:
+    TARGET_ENV: production
+    MyLogin: "Production Tengizovich"
+  script:
+    - echo "Do your deploy here to ${TARGET_ENV}"
+    - echo ${DB_SERVER}
+    - echo "MyLogin"
+    - echo $MyLogin
+    - echo "MyPassword"
+    - echo $MyPassword
+  only:
+    - main
+  environment:
+    name: production    
+
+pages_job:
+  stage: deploy
+  script:
+    - echo "Deploying static websites..."
+  artifacts:
+    paths:
+      - public/
+  only:
+    - master
+
+create_file_job:
+  stage: build
+  script:
+    - echo "Creating the file..."
+  artifacts:
+    paths:
+      - path/to/file.txt
+
+test_file_job:
+  stage: test
+  script:
+    - echo "Testing the file..."
+
+delete_file_job:
+  stage: deploy
+  script:
+    - echo "Deleting the file..."
+
+pages:
+  stage: deploy
+  script:
+    - echo 'Publishing website to GitLab Pages'
+    # Add commands to build your website here
+  artifacts:
+    paths:
+      - public/
+    exclude:
+      - public/example.txt
+
+
+
